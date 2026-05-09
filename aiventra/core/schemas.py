@@ -117,3 +117,75 @@ class ExtractionResult(BaseModel):
     preprocessed: PreprocessedDocument
     model_used: Optional[str] = None
     processing_time_seconds: Optional[float] = None
+
+
+# ── Phase 2: Forensic Image & Video Analysis ──────────────────────────────────
+
+class DetectedObject(BaseModel):
+    """YOLO detection result."""
+
+    class_name: str = Field(description="YOLO class label, e.g. person, knife, blood")
+    confidence: float = Field(ge=0.0, le=1.0)
+    bounding_box: Optional[List[float]] = Field(
+        default=None,
+        description="Bounding box [x_min, y_min, x_max, y_max] in normalised coords",
+    )
+
+
+class ForensicImageResult(BaseModel):
+    """Structured forensic analysis of a single image."""
+
+    image_id: str
+    source_type: str = Field(description="Source type, e.g. pdf_image, cctv_frame")
+    source_location: str = Field(
+        description="Page xref or video timestamp/frame for audit trail"
+    )
+    detected_objects: List[DetectedObject] = Field(default_factory=list)
+    forensic_description: str = Field(description="Qwen3.5-397B forensic caption")
+    confidence: float = Field(ge=0.0, le=1.0)
+    flags: List[str] = Field(default_factory=list)
+    advisory_note: str = Field(
+        default="Advisory output only — not conclusive evidence.",
+        description="All AI image outputs are advisory-only per forensic policy.",
+    )
+
+
+class ImageAnalysisResult(BaseModel):
+    """Aggregate result for Track A (PDF images) or bulk image analyse."""
+
+    images: List[ForensicImageResult] = Field(default_factory=list)
+    total_images_extracted: int = Field(default=0)
+    relevant_images: int = Field(default=0)
+    processing_time_seconds: float = Field(default=0.0)
+    model_used: Optional[str] = None
+
+
+class VideoEvent(BaseModel):
+    """A single event detected inside a CCTV clip."""
+
+    event_type: str = Field(description="Classified event, e.g. person_entry, weapon_visible, suspicious_carry")
+    timestamp_seconds: float = Field(description="Video timestamp in seconds")
+    frame_number: int
+    detected_objects: List[DetectedObject] = Field(default_factory=list)
+    event_description: str = Field(description="Qwen3.5-397B forensic caption")
+    confidence: float = Field(ge=0.0, le=1.0)
+    motion_score: float = Field(default=0.0, ge=0.0, le=1.0)
+    flags: List[str] = Field(default_factory=list)
+    advisory_note: str = Field(
+        default="Advisory output only — not conclusive evidence.",
+        description="All AI video outputs are advisory-only per forensic policy.",
+    )
+
+
+class VideoAnalysisResult(BaseModel):
+    """Track B: full CCTV clip analysis result."""
+
+    video_path: str
+    events: List[VideoEvent] = Field(default_factory=list)
+    total_events: int = Field(default=0)
+    frames_sampled: int = Field(default=0)
+    motion_frames: int = Field(default=0)
+    yolo_relevant_frames: int = Field(default=0)
+    frame_sample_rate_fps: int = Field(default=1)
+    processing_time_seconds: float = Field(default=0.0)
+    model_used: Optional[str] = None

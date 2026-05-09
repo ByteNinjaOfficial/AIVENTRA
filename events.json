@@ -1,0 +1,165 @@
+{
+  "video_path": "cctv.mp4",
+  "events": [
+    {
+      "event_type": "person_present",
+      "timestamp_seconds": 0.0,
+      "frame_number": 0,
+      "detected_objects": [
+        {
+          "class_name": "person",
+          "confidence": 0.8643,
+          "bounding_box": [
+            0.5992,
+            0.2101,
+            0.9389,
+            0.8723
+          ]
+        }
+      ],
+      "event_description": "The surveillance footage captures a lone individual at a residential entrance during nighttime hours, indicated by a timestamp of 22:23 on March 26, 2023. The subject is clothed in a white hooded sweatshirt with the hood raised, heavily distressed blue jeans, dark footwear worn with white socks, and a black mask obscuring the lower portion of their face. Following an initial stance near a large potted plant, the individual demonstrates rapid movement characterized by significant motion blur before delivering a forceful high kick to the red front door. The door displays a vertical \"Easter\" sign, and the subject's concealed identity combined with the aggressive strike suggests potential criminal intent such as attempted burglary or vandalism.",
+      "confidence": 0.44999999999999996,
+      "motion_score": 0.5,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    },
+    {
+      "event_type": "person_present",
+      "timestamp_seconds": 1.0,
+      "frame_number": 30,
+      "detected_objects": [
+        {
+          "class_name": "person",
+          "confidence": 0.8396,
+          "bounding_box": [
+            0.5326,
+            0.3462,
+            0.8015,
+            0.7347
+          ]
+        },
+        {
+          "class_name": "chair",
+          "confidence": 0.3054,
+          "bounding_box": [
+            0.7072,
+            0.7182,
+            0.8277,
+            0.7612
+          ]
+        }
+      ],
+      "event_description": "The surveillance footage captures a lone individual at a residential entrance during nighttime hours, indicated by a timestamp of 22:23 on March 26, 2023. The subject is clothed in a white hooded sweatshirt with the hood raised, heavily distressed blue jeans, dark footwear worn with white socks, and a black mask obscuring the lower portion of their face. Following an initial stance near a large potted plant, the individual demonstrates rapid movement characterized by significant motion blur before delivering a forceful high kick to the red front door. The door displays a vertical \"Easter\" sign, and the subject's concealed identity combined with the aggressive strike suggests potential criminal intent such as attempted burglary or vandalism.",
+      "confidence": 0.6,
+      "motion_score": 0.5,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    },
+    {
+      "event_type": "person_present",
+      "timestamp_seconds": 2.0,
+      "frame_number": 60,
+      "detected_objects": [
+        {
+          "class_name": "person",
+          "confidence": 0.6895,
+          "bounding_box": [
+            0.2596,
+            0.4142,
+            0.5916,
+            0.7212
+          ]
+        }
+      ],
+      "event_description": "The surveillance footage captures a lone individual at a residential entrance during nighttime hours, indicated by a timestamp of 22:23 on March 26, 2023. The subject is clothed in a white hooded sweatshirt with the hood raised, heavily distressed blue jeans, dark footwear worn with white socks, and a black mask obscuring the lower portion of their face. Following an initial stance near a large potted plant, the individual demonstrates rapid movement characterized by significant motion blur before delivering a forceful high kick to the red front door. The door displays a vertical \"Easter\" sign, and the subject's concealed identity combined with the aggressive strike suggests potential criminal intent such as attempted burglary or vandalism.",
+      "confidence": 0.44999999999999996,
+      "motion_score": 0.5,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    },
+    {
+      "event_type": "person_present",
+      "timestamp_seconds": 3.0,
+      "frame_number": 90,
+      "detected_objects": [
+        {
+          "class_name": "person",
+          "confidence": 0.8196,
+          "bounding_box": [
+            0.3881,
+            0.387,
+            0.7884,
+            0.7197
+          ]
+        }
+      ],
+      "event_description": "The surveillance footage depicts a lone individual sprinting rapidly across a residential porch from left to right. The subject wears a white hooded sweatshirt with the hood pulled up, dark denim-style pants, dark footwear, and a black mask obscuring the face. Significant motion blur throughout the first two frames confirms high-speed flight past a red door adorned with vertical lettering and a sliding glass window. In the final frame, the subject has fully exited the field of view, leaving the illuminated concrete patio and nearby foliage undisturbed.",
+      "confidence": 0.44999999999999996,
+      "motion_score": 0.5,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    },
+    {
+      "event_type": "person_present",
+      "timestamp_seconds": 4.0,
+      "frame_number": 120,
+      "detected_objects": [
+        {
+          "class_name": "person",
+          "confidence": 0.6803,
+          "bounding_box": [
+            0.3424,
+            0.3967,
+            0.6706,
+            0.7446
+          ]
+        }
+      ],
+      "event_description": "The surveillance footage depicts a lone individual sprinting rapidly across a residential porch from left to right. The subject wears a white hooded sweatshirt with the hood pulled up, dark denim-style pants, dark footwear, and a black mask obscuring the face. Significant motion blur throughout the first two frames confirms high-speed flight past a red door adorned with vertical lettering and a sliding glass window. In the final frame, the subject has fully exited the field of view, leaving the illuminated concrete patio and nearby foliage undisturbed.",
+      "confidence": 0.44999999999999996,
+      "motion_score": 0.5,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    },
+    {
+      "event_type": "unknown",
+      "timestamp_seconds": 5.0,
+      "frame_number": 150,
+      "detected_objects": [
+        {
+          "class_name": "chair",
+          "confidence": 0.3443,
+          "bounding_box": [
+            0.4363,
+            0.7103,
+            0.5621,
+            0.7524
+          ]
+        }
+      ],
+      "event_description": "The surveillance footage depicts a lone individual sprinting rapidly across a residential porch from left to right. The subject wears a white hooded sweatshirt with the hood pulled up, dark denim-style pants, dark footwear, and a black mask obscuring the face. Significant motion blur throughout the first two frames confirms high-speed flight past a red door adorned with vertical lettering and a sliding glass window. In the final frame, the subject has fully exited the field of view, leaving the illuminated concrete patio and nearby foliage undisturbed.",
+      "confidence": 0.44999999999999996,
+      "motion_score": 0.5,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    },
+    {
+      "event_type": "unknown",
+      "timestamp_seconds": 6.0,
+      "frame_number": 180,
+      "detected_objects": [],
+      "event_description": "This surveillance frame displays a stationary, wide-angle view of a residential exterior porch or patio area during nighttime hours. The environment features a beige stucco wall with central white-framed sliding windows covered by closed drapes, flanked by tall potted vegetation on the right and a partial view of a doormat on the left. A metal railing or piece of garden furniture is visible in the extreme foreground, suggesting the camera is mounted at approximately chest height or on a fixture near seating. Large digital overlays, specifically a \"shocked face\" emoji and text caption, significantly occlude the upper section of the video feed, limiting visibility of the ceiling or overhead space. While a timestamp in the bottom right corner establishes the date and time as March 26, 2023, at 22:24:01 PDT, no human subjects or active threats are discernible in this specific frozen moment.",
+      "confidence": 0.3,
+      "motion_score": 0.5,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    }
+  ],
+  "total_events": 7,
+  "frames_sampled": 7,
+  "motion_frames": 7,
+  "yolo_relevant_frames": 7,
+  "frame_sample_rate_fps": 1,
+  "processing_time_seconds": 156.41,
+  "model_used": "Qwen/Qwen3.5-397B-A17B"
+}

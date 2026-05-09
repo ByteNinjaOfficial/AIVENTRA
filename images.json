@@ -1,0 +1,289 @@
+{
+  "images": [
+    {
+      "image_id": "ForensicReport_page2_img0_xref23",
+      "source_type": "pdf_image",
+      "source_location": "Page 2, xref 23",
+      "detected_objects": [
+        {
+          "class_name": "person",
+          "confidence": 0.5687,
+          "bounding_box": [
+            0.0041,
+            0.1074,
+            0.4764,
+            0.991
+          ]
+        }
+      ],
+      "forensic_description": "The submitted images display a sequence of forensic documentation centered around a male figure lying supine on a light gray floor, dressed in a blue palm-tree print shirt, dark denim-style trousers, and beige socks. One white sneaker is located separately near the right foot, and yellow evidence markers are placed near the torso and the loose shoe. Close-up examination reveals a large kitchen knife tagged as evidence item 17; the blade exhibits reddish-brown discoloration consistent with dried blood and is being measured against a metric ruler by a gloved investigator. Finally, an employee identification card is shown for \"Cheung Tai-Wah,\" identifying him as a Security Guard II for Hong Kong Secure Co. Ltd., with an expiration date of April 26, 2019. It is important to note that the figure in the full-body shot lacks defined facial features and anatomical detail typical of a living human, strongly indicating it is a training mannequin used for a simulation or reenactment.",
+      "confidence": 0.7,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    },
+    {
+      "image_id": "ForensicReport_page3_img3_xref31",
+      "source_type": "pdf_image",
+      "source_location": "Page 3, xref 31",
+      "detected_objects": [
+        {
+          "class_name": "knife",
+          "confidence": 0.7006,
+          "bounding_box": [
+            0.1356,
+            0.4796,
+            0.7711,
+            0.5801
+          ]
+        },
+        {
+          "class_name": "person",
+          "confidence": 0.331,
+          "bounding_box": [
+            0.1058,
+            0.0041,
+            0.4169,
+            0.3275
+          ]
+        }
+      ],
+      "forensic_description": "The submitted images display a sequence of forensic documentation centered around a male figure lying supine on a light gray floor, dressed in a blue palm-tree print shirt, dark denim-style trousers, and beige socks. One white sneaker is located separately near the right foot, and yellow evidence markers are placed near the torso and the loose shoe. Close-up examination reveals a large kitchen knife tagged as evidence item 17; the blade exhibits reddish-brown discoloration consistent with dried blood and is being measured against a metric ruler by a gloved investigator. Finally, an employee identification card is shown for \"Cheung Tai-Wah,\" identifying him as a Security Guard II for Hong Kong Secure Co. Ltd., with an expiration date of April 26, 2019. It is important to note that the figure in the full-body shot lacks defined facial features and anatomical detail typical of a living human, strongly indicating it is a training mannequin used for a simulation or reenactment.",
+      "confidence": 0.7,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    },
+    {
+      "image_id": "ForensicReport_page4_img3_xref37",
+      "source_type": "pdf_image",
+      "source_location": "Page 4, xref 37",
+      "detected_objects": [
+        {
+          "class_name": "person",
+          "confidence": 0.8253,
+          "bounding_box": [
+            0.1278,
+            0.2382,
+            0.3768,
+            0.6438
+          ]
+        }
+      ],
+      "forensic_description": "The submitted images display a sequence of forensic documentation centered around a male figure lying supine on a light gray floor, dressed in a blue palm-tree print shirt, dark denim-style trousers, and beige socks. One white sneaker is located separately near the right foot, and yellow evidence markers are placed near the torso and the loose shoe. Close-up examination reveals a large kitchen knife tagged as evidence item 17; the blade exhibits reddish-brown discoloration consistent with dried blood and is being measured against a metric ruler by a gloved investigator. Finally, an employee identification card is shown for \"Cheung Tai-Wah,\" identifying him as a Security Guard II for Hong Kong Secure Co. Ltd., with an expiration date of April 26, 2019. It is important to note that the figure in the full-body shot lacks defined facial features and anatomical detail typical of a living human, strongly indicating it is a training mannequin used for a simulation or reenactment.",
+      "confidence": 0.7,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    },
+    {
+      "image_id": "ForensicReport_page5_img0_xref40",
+      "source_type": "pdf_image",
+      "source_location": "Page 5, xref 40",
+      "detected_objects": [
+        {
+          "class_name": "person",
+          "confidence": 0.4112,
+          "bounding_box": [
+            0.1278,
+            0.0025,
+            0.3622,
+            0.1564
+          ]
+        },
+        {
+          "class_name": "person",
+          "confidence": 0.3139,
+          "bounding_box": [
+            0.2509,
+            0.3442,
+            0.647,
+            0.5685
+          ]
+        }
+      ],
+      "forensic_description": "These images collectively document items and conditions relevant to a forensic investigation or training scenario. The first photograph highlights reddish-brown fluid transfers, morphologically consistent with blood smears, situated on a white vertical surface directly above a stainless steel safety handle. The second image catalogs a black, glossy-finish duffel or gear bag photographed alongside a yellow measuring tape for dimensional context. The third visual records a humanoid figure lying supine on a tiled floor, clothed in a tropical-print shirt and dark denim trousers, accompanied by evidentiary marker number 6. Although posed as a casualty, the figure exhibits smooth, featureless facial characteristics and uniform skin texture typical of a high-fidelity medical training manikin rather than a biological human subject.",
+      "confidence": 0.7,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    },
+    {
+      "image_id": "ForensicReport_page8_img1_xref54",
+      "source_type": "pdf_image",
+      "source_location": "Page 8, xref 54",
+      "detected_objects": [
+        {
+          "class_name": "backpack",
+          "confidence": 0.3314,
+          "bounding_box": [
+            0.0175,
+            0.0048,
+            0.7966,
+            0.8098
+          ]
+        }
+      ],
+      "forensic_description": "These images collectively document items and conditions relevant to a forensic investigation or training scenario. The first photograph highlights reddish-brown fluid transfers, morphologically consistent with blood smears, situated on a white vertical surface directly above a stainless steel safety handle. The second image catalogs a black, glossy-finish duffel or gear bag photographed alongside a yellow measuring tape for dimensional context. The third visual records a humanoid figure lying supine on a tiled floor, clothed in a tropical-print shirt and dark denim trousers, accompanied by evidentiary marker number 6. Although posed as a casualty, the figure exhibits smooth, featureless facial characteristics and uniform skin texture typical of a high-fidelity medical training manikin rather than a biological human subject.",
+      "confidence": 0.7,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    },
+    {
+      "image_id": "ForensicReport_page8_img3_xref56",
+      "source_type": "pdf_image",
+      "source_location": "Page 8, xref 56",
+      "detected_objects": [
+        {
+          "class_name": "person",
+          "confidence": 0.3735,
+          "bounding_box": [
+            0.0033,
+            0.1006,
+            0.4747,
+            0.985
+          ]
+        }
+      ],
+      "forensic_description": "These images collectively document items and conditions relevant to a forensic investigation or training scenario. The first photograph highlights reddish-brown fluid transfers, morphologically consistent with blood smears, situated on a white vertical surface directly above a stainless steel safety handle. The second image catalogs a black, glossy-finish duffel or gear bag photographed alongside a yellow measuring tape for dimensional context. The third visual records a humanoid figure lying supine on a tiled floor, clothed in a tropical-print shirt and dark denim trousers, accompanied by evidentiary marker number 6. Although posed as a casualty, the figure exhibits smooth, featureless facial characteristics and uniform skin texture typical of a high-fidelity medical training manikin rather than a biological human subject.",
+      "confidence": 0.7,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    },
+    {
+      "image_id": "ForensicReport_page8_img4_xref57",
+      "source_type": "pdf_image",
+      "source_location": "Page 8, xref 57",
+      "detected_objects": [
+        {
+          "class_name": "person",
+          "confidence": 0.3206,
+          "bounding_box": [
+            0.0003,
+            0.5298,
+            0.1186,
+            0.9909
+          ]
+        }
+      ],
+      "forensic_description": "These images document various forms of physical evidence located indoors on a hard-surfaced floor, suggesting a disturbed environment potentially involving violence. In the initial views, a white sneaker displaying unexplained reddish-brown soiling on the forefoot sole lies prone near Marker 7, while an overturned blue chair rests awkwardly across a tactile safety mat near a doorframe smeared with a red substance visually consistent with blood (Markers 4 and 10). The final image details recovered personal property arrayed alongside Marker 16, specifically an open black wallet, loose Hong Kong Dollar banknotes ($20 and $100 denominations), and a government identification card identifying the holder as Cheung Tai Wah. Investigators' hands are visible utilizing tools to manipulate the currency and identification cards during the evidence logging process.",
+      "confidence": 0.7,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    },
+    {
+      "image_id": "ForensicReport_page9_img1_xref61",
+      "source_type": "pdf_image",
+      "source_location": "Page 9, xref 61",
+      "detected_objects": [
+        {
+          "class_name": "tie",
+          "confidence": 0.5606,
+          "bounding_box": [
+            0.0512,
+            0.4794,
+            0.333,
+            0.9889
+          ]
+        },
+        {
+          "class_name": "tie",
+          "confidence": 0.4578,
+          "bounding_box": [
+            0.2659,
+            0.5096,
+            0.5712,
+            0.9888
+          ]
+        },
+        {
+          "class_name": "scissors",
+          "confidence": 0.3693,
+          "bounding_box": [
+            0.0,
+            0.0335,
+            0.8116,
+            0.8437
+          ]
+        }
+      ],
+      "forensic_description": "These images document various forms of physical evidence located indoors on a hard-surfaced floor, suggesting a disturbed environment potentially involving violence. In the initial views, a white sneaker displaying unexplained reddish-brown soiling on the forefoot sole lies prone near Marker 7, while an overturned blue chair rests awkwardly across a tactile safety mat near a doorframe smeared with a red substance visually consistent with blood (Markers 4 and 10). The final image details recovered personal property arrayed alongside Marker 16, specifically an open black wallet, loose Hong Kong Dollar banknotes ($20 and $100 denominations), and a government identification card identifying the holder as Cheung Tai Wah. Investigators' hands are visible utilizing tools to manipulate the currency and identification cards during the evidence logging process.",
+      "confidence": 0.7,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    },
+    {
+      "image_id": "ForensicReport_page11_img2_xref73",
+      "source_type": "pdf_image",
+      "source_location": "Page 11, xref 73",
+      "detected_objects": [
+        {
+          "class_name": "person",
+          "confidence": 0.3051,
+          "bounding_box": [
+            0.0003,
+            0.4695,
+            0.1696,
+            0.6899
+          ]
+        }
+      ],
+      "forensic_description": "These images document various forms of physical evidence located indoors on a hard-surfaced floor, suggesting a disturbed environment potentially involving violence. In the initial views, a white sneaker displaying unexplained reddish-brown soiling on the forefoot sole lies prone near Marker 7, while an overturned blue chair rests awkwardly across a tactile safety mat near a doorframe smeared with a red substance visually consistent with blood (Markers 4 and 10). The final image details recovered personal property arrayed alongside Marker 16, specifically an open black wallet, loose Hong Kong Dollar banknotes ($20 and $100 denominations), and a government identification card identifying the holder as Cheung Tai Wah. Investigators' hands are visible utilizing tools to manipulate the currency and identification cards during the evidence logging process.",
+      "confidence": 0.7,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    },
+    {
+      "image_id": "ForensicReport_page12_img0_xref76",
+      "source_type": "pdf_image",
+      "source_location": "Page 12, xref 76",
+      "detected_objects": [
+        {
+          "class_name": "knife",
+          "confidence": 0.6193,
+          "bounding_box": [
+            0.1366,
+            0.4798,
+            0.7693,
+            0.5793
+          ]
+        },
+        {
+          "class_name": "person",
+          "confidence": 0.4232,
+          "bounding_box": [
+            0.1058,
+            0.004,
+            0.417,
+            0.3266
+          ]
+        }
+      ],
+      "forensic_description": "Based on the visual analysis provided by your request, here is the forensic assessment:\n\nThis submission contains two distinct pieces of evidentiary photography taken against a neutral gray-blue background. The first image depicts a fixed-blade kitchen knife positioned beneath a yellow metric ruler and adjacent to a yellow evidence marker labeled \"17\"; noticeable red residues, appearing consistent with dried blood, are smeared along the upper edge (spine) and lower portion of the steel blade near the black handled grip. Gloved fingers are partially visible manipulating the ruler, suggesting laboratory examination rather than initial field recovery. The second photograph documents a laminated security guard identification card issued by \"Hong Kong Secure Co. Ltd.\" bearing the photo and name of CHEUNG Tai-Wah; notably, the expiration date listed on the credential is 26 April 2019. These items collectively represent physical evidence potentially linking a suspect or victim via biometric data (blood/DNA on the weapon) and personal identification within an active homicide or assault investigation.",
+      "confidence": 0.7,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    },
+    {
+      "image_id": "ForensicReport_page12_img3_xref79",
+      "source_type": "pdf_image",
+      "source_location": "Page 12, xref 79",
+      "detected_objects": [
+        {
+          "class_name": "person",
+          "confidence": 0.8416,
+          "bounding_box": [
+            0.1282,
+            0.2379,
+            0.3771,
+            0.6431
+          ]
+        }
+      ],
+      "forensic_description": "Based on the visual analysis provided by your request, here is the forensic assessment:\n\nThis submission contains two distinct pieces of evidentiary photography taken against a neutral gray-blue background. The first image depicts a fixed-blade kitchen knife positioned beneath a yellow metric ruler and adjacent to a yellow evidence marker labeled \"17\"; noticeable red residues, appearing consistent with dried blood, are smeared along the upper edge (spine) and lower portion of the steel blade near the black handled grip. Gloved fingers are partially visible manipulating the ruler, suggesting laboratory examination rather than initial field recovery. The second photograph documents a laminated security guard identification card issued by \"Hong Kong Secure Co. Ltd.\" bearing the photo and name of CHEUNG Tai-Wah; notably, the expiration date listed on the credential is 26 April 2019. These items collectively represent physical evidence potentially linking a suspect or victim via biometric data (blood/DNA on the weapon) and personal identification within an active homicide or assault investigation.",
+      "confidence": 0.7,
+      "flags": [],
+      "advisory_note": "Advisory output only — not conclusive evidence."
+    }
+  ],
+  "total_images_extracted": 35,
+  "relevant_images": 11,
+  "processing_time_seconds": 241.73,
+  "model_used": "Qwen/Qwen3.5-397B-A17B"
+}
