@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import json
 import logging
-import sys
+from pathlib import Path
+from typing import Optional
 from pathlib import Path
 from typing import Optional
 
@@ -65,7 +65,7 @@ def analyze(
     output_json = result.model_dump_json(indent=2)
 
     if output:
-        output.write_text(output_json)
+        output.write_text(output_json, encoding="utf-8")
         if not quiet:
             typer.echo(f"Results written to: {output}")
     else:
@@ -163,11 +163,11 @@ def analyze_images(
     pdf_path: Path = typer.Argument(..., exists=True, help="Path to the PDF report with images"),
     output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output file path (JSON)"),
     model: Optional[str] = typer.Option(None, "--model", "-m", help="Override VLM model name"),
-    skip_yolo: bool = typer.Option(False, "--skip-yolo", help="Send all extracted images to VLM regardless of YOLO"),
+    
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable debug logging"),
     quiet: bool = typer.Option(False, "--quiet", "-q", help="Only output JSON result"),
 ):
-    """Extract and forensic-analyse embedded images from a PDF report (Track A)."""
+    """Extract and forensic-analyse ALL embedded images from a PDF report (Track A)."""
     _setup_logging(verbose)
     if quiet:
         logging.getLogger().setLevel(logging.ERROR)
@@ -178,7 +178,6 @@ def analyze_images(
         result = analyze_pdf_images(
             pdf_path=pdf_path,
             output_dir=None,
-            skip_yolo_filter=skip_yolo,
             model=model,
         )
     except FileNotFoundError as exc:
@@ -193,7 +192,7 @@ def analyze_images(
 
     output_json = result.model_dump_json(indent=2)
     if output:
-        output.write_text(output_json)
+        output.write_text(output_json, encoding="utf-8")
         if not quiet:
             typer.echo(f"Results written to: {output}")
     else:
@@ -203,12 +202,14 @@ def analyze_images(
         typer.echo("", err=True)
         typer.echo("=== IMAGE ANALYSIS SUMMARY ===", err=True)
         typer.echo(f"  Total images extracted: {result.total_images_extracted}", err=True)
-        typer.echo(f"  Relevant images: {result.relevant_images}", err=True)
+        typer.echo(f"  Images analyzed: {result.images_analyzed}", err=True)
+        typer.echo(f"  VLM batch size: {result.vlm_batch_size}", err=True)
         typer.echo(f"  Model: {result.model_used}", err=True)
         typer.echo(f"  Processing time: {result.processing_time_seconds:.2f}s", err=True)
         for img in result.images:
             typer.echo(f"\n  Image: {img.image_id}", err=True)
-            typer.echo(f"    Objects: {[d.class_name for d in img.detected_objects]}", err=True)
+            typer.echo(f"    Location: {img.source_location}", err=True)
+            typer.echo(f"    Confidence: {img.confidence}", err=True)
             typer.echo(f"    Description: {img.forensic_description or 'N/A'}", err=True)
 
 
@@ -251,7 +252,7 @@ def analyze_video(
 
     output_json = result.model_dump_json(indent=2)
     if output:
-        output.write_text(output_json)
+        output.write_text(output_json, encoding="utf-8")
         if not quiet:
             typer.echo(f"Results written to: {output}")
     else:

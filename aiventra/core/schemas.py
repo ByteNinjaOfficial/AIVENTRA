@@ -133,29 +133,29 @@ class DetectedObject(BaseModel):
 
 
 class ForensicImageResult(BaseModel):
-    """Structured forensic analysis of a single image."""
+    """Structured forensic analysis of a single image (PDF or CCTV frame)."""
 
     image_id: str
     source_type: str = Field(description="Source type, e.g. pdf_image, cctv_frame")
     source_location: str = Field(
         description="Page xref or video timestamp/frame for audit trail"
     )
-    detected_objects: List[DetectedObject] = Field(default_factory=list)
-    forensic_description: str = Field(description="Qwen3.5-397B forensic caption")
+    forensic_description: str = Field(description="VLM forensic caption")
     confidence: float = Field(ge=0.0, le=1.0)
     flags: List[str] = Field(default_factory=list)
     advisory_note: str = Field(
-        default="Advisory output only — not conclusive evidence.",
+        default="Advisory output only - not conclusive evidence.",
         description="All AI image outputs are advisory-only per forensic policy.",
     )
 
 
 class ImageAnalysisResult(BaseModel):
-    """Aggregate result for Track A (PDF images) or bulk image analyse."""
+    """Aggregate result for Track A (PDF images)."""
 
     images: List[ForensicImageResult] = Field(default_factory=list)
     total_images_extracted: int = Field(default=0)
-    relevant_images: int = Field(default=0)
+    images_analyzed: int = Field(default=0)
+    vlm_batch_size: int = Field(default=2)
     processing_time_seconds: float = Field(default=0.0)
     model_used: Optional[str] = None
 
@@ -172,7 +172,7 @@ class VideoEvent(BaseModel):
     motion_score: float = Field(default=0.0, ge=0.0, le=1.0)
     flags: List[str] = Field(default_factory=list)
     advisory_note: str = Field(
-        default="Advisory output only — not conclusive evidence.",
+        default="Advisory output only - not conclusive evidence.",
         description="All AI video outputs are advisory-only per forensic policy.",
     )
 

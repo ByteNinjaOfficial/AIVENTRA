@@ -85,7 +85,7 @@ CLS_CONF_THRESHOLD = 0.30
 MOTION_FG_THRESHOLD = 500  # minimum foreground pixels to count as motion
 YOLO_BATCH_SIZE = 4
 YOLO_WORKERS = 3
-VLM_BATCH_SIZE = 3
+VLM_BATCH_SIZE = 2
 
 
 def sample_frames(
@@ -351,18 +351,20 @@ def classify_events(
 
     for idx, frame, ts, orig_idx, detections in frames_with_detections:
         classes = {d.class_name for d in detections}
-        event_type = "unknown"
         if "blood" in classes:
             event_type = "blood_visible"
         elif "knife" in classes or "scissors" in classes:
             event_type = "weapon_visible"
         elif any(c in classes for c in {"bag", "backpack", "handbag", "suitcase"}):
-            if "person" in classes:
-                event_type = "suspicious_carry"
-            else:
-                event_type = "object_present"
+            event_type = "suspicious_carry" if "person" in classes else "object_present"
+        elif "chair" in classes:
+            event_type = "property_evidence"
         elif "person" in classes:
             event_type = "person_present"
+        elif not classes:
+            event_type = "empty_frame"
+        else:
+            event_type = "other_evidence"
 
         classified.append((idx, frame, ts, orig_idx, detections, event_type))
 
@@ -375,6 +377,17 @@ def classify_events(
 
 
 def _encode_frame_to_b64(frame_bgr: np.ndarray, fmt: str = "JPEG") -> str:
+    # Use OpenCV's fast encoder to avoid an extra color conversion and PIL overhead.
+    # cv2.imencode returns a 1D numpy array buffer which we can base64-encode directly.
+    ext = ".jpg" if fmt.upper().startswith("J") else ".png"
+    try:
+        ok, enc = cv2.imencode(ext, frame_bgr, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
+        if ok:
+            return base64.b64encode(enc.tobytes()).decode()
+    except Exception:
+        pass
+
+    # Fallback to PIL if OpenCV encoding fails
     pil = Image.fromarray(cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB))
     buf = io.BytesIO()
     pil.save(buf, format=fmt)
@@ -440,7 +453,7 @@ def analyze_frames_qwen_batched(
             reply = ""
 
         for (ts, orig_idx, event_type, detections) in frames_meta:
-            motion_score = 0.5  # cosmetic default; MOG2 already vetted this frame
+            motion_score = 0.5
             events.append(
                 VideoEvent(
                     event_type=event_type,
@@ -448,7 +461,7 @@ def analyze_frames_qwen_batched(
                     frame_number=orig_idx,
                     detected_objects=detections,
                     event_description=reply,
-                    confidence=min(0.85, 0.3 + 0.15 * len(detections)),
+                    confidence=round(min(0.85, 0.3 + 0.15 * len(detections)), 2),
                     motion_score=motion_score,
                 )
             )

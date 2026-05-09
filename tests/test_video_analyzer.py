@@ -101,10 +101,16 @@ class TestClassifyEvents:
         classified = classify_events([item])
         assert classified[0][5] == "person_present"
 
-    def test_unknown(self):
+    def test_empty_frame(self):
         item = (0, np.zeros((100, 100, 3), dtype=np.uint8), 0.0, 0, [])
         classified = classify_events([item])
-        assert classified[0][5] == "unknown"
+        assert classified[0][5] == "empty_frame"
+
+    def test_chair_only(self):
+        d = DetectedObject(class_name="chair", confidence=0.9)
+        item = (0, np.zeros((100, 100, 3), dtype=np.uint8), 0.0, 0, [d])
+        classified = classify_events([item])
+        assert classified[0][5] == "property_evidence"
 
 
 class TestVideoEventSchema:
@@ -118,7 +124,7 @@ class TestVideoEventSchema:
             event_description="A person walks through the frame.",
             confidence=0.75,
         )
-        assert evt.advisory_note == "Advisory output only — not conclusive evidence."
+        assert evt.advisory_note == "Advisory output only - not conclusive evidence."
 
     def test_video_analysis_result(self):
         result = VideoAnalysisResult(
@@ -159,7 +165,7 @@ class TestAnalyzeFramesQwenBatched:
                 from aiventra.core.video_analyzer import analyze_frames_qwen_batched
 
                 events = analyze_frames_qwen_batched(
-                    classified, max_batch_size=3, model="test-model"
+                    classified, max_batch_size=2, model="test-model"
                 )
                 assert len(events) == 1
                 assert "Two individuals" in events[0].event_description

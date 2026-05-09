@@ -1,16 +1,19 @@
 """Track A — forensic image analysis from PDFs via Qwen3.5-397B-A17B.
 
 Pipeline:
-    PDF → PyMuPDF image extraction → size/colour filter
-        → YOLOv11n batch detection (filter: person, knife, weapon, blood, bag, chair)
-        → Qwen3.5-397B forensic captioning per relevant image
+    PDF → PyMuPDF image extraction (size/colour filter)
+        → ALL images → Qwen3.5-397B in batches of 2
         → ImageAnalysisResult
+
+No YOLO in the PDF image pipeline — the VLM sees every image directly.
+YOLO is used only for CCTV video (Track B).
 """
 
 from __future__ import annotations
 
 import base64
 import io
+import imghdr
 import logging
 import os
 import time
@@ -18,38 +21,18 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 import numpy as np
+import hashlib
+from collections import defaultdict
 import fitz  # PyMuPDF
 from PIL import Image
 
 from aiventra.core.config import Config
-from aiventra.core.schemas import DetectedObject, ForensicImageResult, ImageAnalysisResult
+from aiventra.core.schemas import ForensicImageResult, ImageAnalysisResult
 
 logger = logging.getLogger(__name__)
 
-try:
-    from ultralytics import YOLO as _YOLO
-    _YOLO_AVAILABLE = True
-except Exception as exc:
-    logger.warning("ultralytics not available: %s", exc)
-    _YOLO_AVAILABLE = False
-    _YOLO = None
-
-# Relevant YOLO COCO classes for forensic filtering.
-FORENSIC_CLASSES = {
-    "person",
-    "knife",
-    "scissors",
-    "blood",
-    "bag",
-    "backpack",
-    "handbag",
-    "suitcase",
-    "chair",
-    "tie",
-    "cell phone",
-}
-
 MIN_IMAGE_SIZE = 64
+DEFAULT_VLM_BATCH_SIZE = 2
 
 FORENSIC_IMAGE_PROMPT = (
     "You are a forensic image analyst. Describe the image for investigation use. "
@@ -67,16 +50,23 @@ FORENSIC_IMAGE_SYSTEM_PROMPT = (
 )
 
 
-def _is_single_colour(img: Image.Image, threshold: int = 10) -> bool:
-    """Detect near-uniform single-colour images (logos, headers)."""
+def _is_single_colour(img: Image.Image, threshold: int = 10, _downsample: int = 32) -> bool:
+    """Detect near-uniform single-colour images (logos, headers).
+
+    To speed up checks for large images we downsample to a small thumbnail
+    before converting to a NumPy array.
+    """
     if img.mode == "1":
         return True
     if img.mode != "RGB":
         img = img.convert("RGB")
-    arr = np.asarray(img)
+
+    # downsample to reduce memory & computation cost
+    thumb = img.resize((_downsample, _downsample), resample=Image.BILINEAR)
+    arr = np.asarray(thumb)
     if arr.ndim == 2:
         return (arr.max() - arr.min()) <= threshold
-    channel_ranges = [arr[:, :, i].max() - arr[:, :, i].min() for i in range(3)]
+    channel_ranges = [int(arr[:, :, i].max()) - int(arr[:, :, i].min()) for i in range(3)]
     return all(r <= threshold for r in channel_ranges)
 
 
@@ -86,7 +76,7 @@ def extract_images_from_pdf(
     """Extract embedded images from a PDF.
 
     Returns:
-        List of tuples: (unique_image_id, raw_image_bytes, xref, page_number/location_str)
+        List of tuples: (unique_image_id, raw_image_bytes, xref, page_location_str)
     """
     pdf_path = Path(pdf_path)
     if not pdf_path.exists():
@@ -136,142 +126,48 @@ def extract_images_from_pdf(
     return images
 
 
-def _load_yolo_model():
-    if not _YOLO_AVAILABLE:
-        return None
-    try:
-        model = _YOLO("yolo11n.pt")
-        return model
-    except Exception as exc:
-        logger.warning("Failed to load YOLOv11n: %s", exc)
-        return None
+def _image_to_base64(raw_bytes: bytes) -> str:
+    """Convert raw image bytes to a data URL without unnecessary re-encoding.
 
-
-def filter_images_yolo(
-    images: List[Tuple[str, bytes, int, str]],
-    batch_size: int = 4,
-    conf_threshold: float = 0.3,
-    device: str = "cpu",
-) -> List[Tuple[str, bytes, int, str, List[DetectedObject]]]:
-    """Run YOLOv11n detection on extracted images and filter by relevant forensic classes.
-
-    Args:
-        images: List of (image_id, bytes, xref, location) tuples.
-        batch_size: Batch size for YOLO inference.
-        conf_threshold: Minimum confidence for detection.
-        device: Device to run YOLO on.
-
-    Returns:
-        List of tuples with YOLO detections appended.
+    Fast-path uses `imghdr` to detect common formats and base64-encodes the
+    original bytes. If the format cannot be detected, we fall back to PIL
+    and choose a sensible encoded format.
     """
-    if not images:
-        return []
+    fmt_guess = imghdr.what(None, raw_bytes)
+    if fmt_guess:
+        # Return plain base64 payload (caller composes data URL).
+        return base64.b64encode(raw_bytes).decode()
 
-    model = _load_yolo_model()
-    if model is None:
-        logger.error("YOLOv11n not available; skipping image filter.")
-        # Return all images without detections
-        return [(img[0], img[1], img[2], img[3], []) for img in images]
-
-    # Convert bytes to numpy arrays for YOLO
-    pil_images: List[Optional[Image.Image]] = []
-    for _, raw_bytes, _, _ in images:
-        try:
-            pil = Image.open(io.BytesIO(raw_bytes))
-            if pil.mode != "RGB":
-                pil = pil.convert("RGB")
-            pil_images.append(pil)
-        except Exception as exc:
-            logger.warning("Failed to decode image for YOLO: %s", exc)
-            pil_images.append(None)
-
-    results: List[Tuple[int, List[DetectedObject]]] = []
-    for batch_start in range(0, len(pil_images), batch_size):
-        batch: List[np.ndarray] = []
-        batch_indices: List[int] = []
-        for j, pil in enumerate(
-            pil_images[batch_start : batch_start + batch_size], start=batch_start
-        ):
-            if pil is not None:
-                batch.append(np.asarray(pil))
-                batch_indices.append(j)
-        if not batch:
-            continue
-        try:
-            preds = model.predict(batch, device=device, verbose=False)
-            for bi, idx in enumerate(batch_indices):
-                detections: List[DetectedObject] = []
-                res = preds[bi]
-                for box in res.boxes:
-                    cls_id = int(box.cls[0])
-                    cls_name = model.names.get(cls_id, str(cls_id))
-                    conf = float(box.conf[0])
-                    if conf < conf_threshold:
-                        continue
-                    if cls_name in FORENSIC_CLASSES:
-                        # Normalise bounding box
-                        xn_min, yn_min, xn_max, yn_max = box.xyxy[0].tolist()
-                        h, w = res.orig_shape
-                        bbox_norm = [
-                            xn_min / w,
-                            yn_min / h,
-                            xn_max / w,
-                            yn_max / h,
-                        ]
-                        detections.append(
-                            DetectedObject(
-                                class_name=cls_name,
-                                confidence=round(conf, 4),
-                                bounding_box=[round(v, 4) for v in bbox_norm],
-                            )
-                        )
-                results.append((idx, detections))
-        except Exception as exc:
-            logger.error(
-                "YOLO batch inference failed at batch %d: %s",
-                batch_start // batch_size,
-                exc,
-            )
-            for idx in batch_indices:
-                results.append((idx, []))
-            continue
-
-    # Sort by original index and attach to image tuples
-    results_by_idx = {idx: dets for idx, dets in sorted(results, key=lambda x: x[0])}
-    relevant: List[Tuple[str, bytes, int, str, List[DetectedObject]]] = []
-    for idx, img_tuple in enumerate(images):
-        detections = results_by_idx.get(idx, [])
-        relevant.append(
-            (img_tuple[0], img_tuple[1], img_tuple[2], img_tuple[3], detections)
-        )
-
-    return relevant
-
-
-def _image_to_base64(raw_bytes: bytes, fmt: str = "JPEG") -> str:
-    """Convert raw image bytes to base64 data URL."""
+    # Fallback: use PIL to determine format and encode accordingly
     pil = Image.open(io.BytesIO(raw_bytes))
     if pil.mode in ("RGBA", "P"):
-        pil = pil.convert("RGB")
-    buf = io.BytesIO()
-    pil.save(buf, format=fmt)
-    return base64.b64encode(buf.getvalue()).decode()
+        buf = io.BytesIO()
+        pil.save(buf, format="PNG")
+        return base64.b64encode(buf.getvalue()).decode()
+    else:
+        buf = io.BytesIO()
+        pil.save(buf, format="JPEG")
+        return base64.b64encode(buf.getvalue()).decode()
 
 
 def analyze_images_qwen(
-    image_tuples: List[Tuple[str, bytes, int, str, List[DetectedObject]]],
-    max_batch_size: int = 3,
+    image_tuples: List[Tuple[str, bytes, int, str]],
+    max_batch_size: int = DEFAULT_VLM_BATCH_SIZE,
     model: Optional[str] = None,
 ) -> List[ForensicImageResult]:
-    """Send image batches to Qwen3.5-397B-A17B for forensic captioning.
+    """Send ALL images to Qwen3.5-397B-A17B in batches.
+
+    Every image gets its own ForensicImageResult.  Images are grouped in
+    batches of max_batch_size for a single API call — one description per
+    batch, assigned to every image in that batch.
 
     Args:
-        image_tuples: List of (image_id, bytes, xref, location, detections).
-        max_batch_size: Max images per API call (stay within token/image limits).
-        model: Override model name.
+        image_tuples: List of (image_id, bytes, xref, location) tuples.
+        max_batch_size: Images per API call (default 2).
+        model: Override VLM model name.
 
     Returns:
-        List of ForensicImageResult.
+        List of ForensicImageResult — one per image.
     """
     if not image_tuples:
         return []
@@ -279,25 +175,46 @@ def analyze_images_qwen(
     Config.validate()
 
     try:
-        from openai import OpenAI
-
-        client = OpenAI(api_key=Config.API_KEY, base_url=Config.API_BASE_URL)
+        import openai as _openai
     except ImportError as exc:
         raise RuntimeError("openai package required for Qwen API calls") from exc
 
     model_name = model or "Qwen/Qwen3.5-397B-A17B"
     results: List[ForensicImageResult] = []
 
-    for batch_start in range(0, len(image_tuples), max_batch_size):
-        batch = image_tuples[batch_start : batch_start + max_batch_size]
+    # Partition original images into ordered batches (preserve ordering for confidence)
+    ordered_batches: List[List[Tuple[str, bytes, int, str]]] = [
+        image_tuples[i : i + max_batch_size] for i in range(0, len(image_tuples), max_batch_size)
+    ]
 
+    # For each batch, deduplicate identical images within the batch only
+    unique_batches: List[List[Tuple[str, Tuple[str, bytes, int, str]]]] = []
+    batch_groups_list: List[dict] = []
+    for batch in ordered_batches:
+        grp: dict[str, List[Tuple[str, bytes, int, str]]] = defaultdict(list)
+        order: List[str] = []
+        for img_id, raw_bytes, xref, loc in batch:
+            key = hashlib.sha256(raw_bytes).hexdigest()
+            if key not in grp:
+                order.append(key)
+            grp[key].append((img_id, raw_bytes, xref, loc))
+        # representative list preserving order of first appearance
+        unique_batch = [(k, grp[k][0]) for k in order]
+        unique_batches.append(unique_batch)
+        batch_groups_list.append(grp)
+
+    # Worker to send one batch (of unique images) to the VLM
+    def _send_batch(batch: List[Tuple[str, Tuple[str, bytes, int, str]]], batch_index: int) -> Tuple[int, str]:
+        client = _openai.OpenAI(api_key=Config.API_KEY, base_url=Config.API_BASE_URL)
         content: List[dict] = [{"type": "text", "text": FORENSIC_IMAGE_PROMPT}]
-        for _img_id, raw_bytes, _xref, _loc, _dets in batch:
+        for _key, (img_id, raw_bytes, _xref, _loc) in batch:
             b64 = _image_to_base64(raw_bytes)
+            fmt_guess = imghdr.what(None, raw_bytes) or "jpeg"
+            mime = "jpeg" if fmt_guess == "jpeg" else fmt_guess
             content.append(
                 {
                     "type": "image_url",
-                    "image_url": {"url": f"data:image/jpeg;base64,{b64}"},
+                    "image_url": {"url": f"data:image/{mime};base64,{b64}"},
                 }
             )
 
@@ -313,22 +230,44 @@ def analyze_images_qwen(
             )
             reply = resp.choices[0].message.content or ""
         except Exception as exc:
-            logger.error(
-                "Qwen API call failed for batch %d: %s", batch_start // max_batch_size, exc
-            )
+            logger.error("Qwen API call failed for batch %d: %s", batch_index, exc)
             reply = ""
 
-        for img_id, _raw_bytes, xref, location, detections in batch:
-            results.append(
-                ForensicImageResult(
-                    image_id=img_id,
-                    source_type="pdf_image",
-                    source_location=location,
-                    detected_objects=detections,
-                    forensic_description=reply.strip(),
-                    confidence=0.7,
+        return batch_index, (reply or "").strip()
+
+    # Execute batches in parallel (network-bound) to improve throughput
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    batch_replies: dict[int, str] = {}
+    if unique_batches:
+        max_workers = min(4, len(unique_batches))
+        with ThreadPoolExecutor(max_workers=max_workers) as ex:
+            futures = {ex.submit(_send_batch, batch, idx): idx for idx, batch in enumerate(unique_batches)}
+            for fut in as_completed(futures):
+                try:
+                    idx, reply = fut.result()
+                    batch_replies[idx] = reply
+                except Exception as exc:
+                    logger.error("VLM batch worker failed: %s", exc)
+
+    # Build results mapping back to original images (preserve original ordering)
+    for batch_index, unique_batch in enumerate(unique_batches):
+        reply = batch_replies.get(batch_index, "")
+        description = reply
+        confidence = round(min(0.85, 0.65 + 0.05 * batch_index), 2)
+
+        grp = batch_groups_list[batch_index]
+        for key, _rep in unique_batch:
+            for orig_img_id, _rb, _xr, orig_loc in grp.get(key, []):
+                results.append(
+                    ForensicImageResult(
+                        image_id=orig_img_id,
+                        source_type="pdf_image",
+                        source_location=orig_loc,
+                        forensic_description=description,
+                        confidence=confidence,
+                    )
                 )
-            )
 
     return results
 
@@ -336,19 +275,24 @@ def analyze_images_qwen(
 def analyze_pdf_images(
     pdf_path: os.PathLike,
     output_dir: Optional[os.PathLike] = None,
-    skip_yolo_filter: bool = False,
     model: Optional[str] = None,
+    vlm_batch_size: int = DEFAULT_VLM_BATCH_SIZE,
 ) -> ImageAnalysisResult:
-    """Analyse embedded images in a forensic PDF report (Track A).
+    """Analyse ALL embedded images in a forensic PDF report (Track A).
+
+    Pipeline:
+        1. Extract all images via PyMuPDF
+        2. ALL images → Qwen3.5-397B in batches of vlm_batch_size
+        3. Return ImageAnalysisResult
 
     Args:
         pdf_path: Path to the PDF file.
         output_dir: Optional directory to save extracted images for audit.
-        skip_yolo_filter: If True, send ALL extracted images to Qwen regardless of YOLO.
         model: Override VLM model name.
+        vlm_batch_size: Images per API call (default 2).
 
     Returns:
-        ImageAnalysisResult containing forensic descriptions for each relevant image.
+        ImageAnalysisResult with a ForensicImageResult per image.
     """
     start_time = time.time()
     pdf_path = Path(pdf_path)
@@ -372,42 +316,26 @@ def analyze_pdf_images(
                 logger.warning("Could not save %s: %s", safe_id, exc)
         logger.info("Saved %d images to %s", len(extracted), out_dir)
 
-    if skip_yolo_filter:
-        # Send all images, no YOLO filtering
-        relevant = [(t[0], t[1], t[2], t[3], []) for t in extracted]
-    else:
-        relevant = filter_images_yolo(extracted)
+    logger.info("Track A: %d images → VLM (batch size %d)", total_extracted, vlm_batch_size)
 
-    with_detections = [r for r in relevant if r[4]]
-    without_detections = [r for r in relevant if not r[4]]
-
-    # If no detections at all but images extracted, send a sample to Qwen
-    if not with_detections and without_detections:
-        logger.info(
-            "No YOLO detections found; sending up to 2 images for manual review."
-        )
-        to_analyze = without_detections[:2]
-    else:
-        to_analyze = relevant if skip_yolo_filter else with_detections
-
-    logger.info(
-        "Track A: %d extracted → YOLO relevant %d → sending %d to Qwen",
-        total_extracted,
-        len(with_detections),
-        len(to_analyze),
+    forensic_results = analyze_images_qwen(
+        extracted,
+        max_batch_size=vlm_batch_size,
+        model=model,
     )
-
-    forensic_results = analyze_images_qwen(to_analyze, model=model)
 
     elapsed = time.time() - start_time
     logger.info(
-        "Track A complete in %.1fs, %d forensic images", elapsed, len(forensic_results)
+        "Track A complete in %.1fs, %d forensic images",
+        elapsed,
+        len(forensic_results),
     )
 
     return ImageAnalysisResult(
         images=forensic_results,
         total_images_extracted=total_extracted,
-        relevant_images=len(forensic_results),
+        images_analyzed=len(forensic_results),
+        vlm_batch_size=vlm_batch_size,
         processing_time_seconds=round(elapsed, 2),
         model_used=model or "Qwen/Qwen3.5-397B-A17B",
     )
