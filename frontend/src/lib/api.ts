@@ -66,3 +66,64 @@ export async function getReport(caseId: string) {
 export function getReportDocumentUrl(caseId: string) {
   return `${API_URL}/cases/${caseId}/report/document`;
 }
+
+export function getReportMarkdownUrl(caseId: string) {
+  return `${API_URL}/cases/${caseId}/report/markdown`;
+}
+
+export type EvidenceRecord = {
+  id: number;
+  case_id: string;
+  file_type: string;
+  file_name: string;
+  file_path: string;
+  processed: boolean;
+  uploaded_at: string;
+};
+
+export type RiskFlag = {
+  id: number;
+  case_id: string;
+  flag_name: string;
+  description: string;
+  score: number;
+  created_at: string;
+};
+
+export type QAMessage = {
+  role: "user" | "assistant";
+  content: string;
+  timestamp?: string;
+};
+
+export async function getEvidence(caseId: string) {
+  const { data } = await api.get<EvidenceRecord[]>(`/cases/${caseId}/evidence`);
+  return data;
+}
+
+export async function downloadEvidence(caseId: string, fileId: number, fileName: string) {
+  const response = await api.get(`/cases/${caseId}/evidence/${fileId}/download`, { responseType: "blob" });
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", fileName);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+export async function deleteEvidence(caseId: string, fileId: number) {
+  const { data } = await api.delete(`/cases/${caseId}/evidence/${fileId}`);
+  return data;
+}
+
+export async function getRiskFlags(caseId: string) {
+  const { data } = await api.get<RiskFlag[]>(`/cases/${caseId}/risk-flags`);
+  return data;
+}
+
+export async function askQuestion(caseId: string, question: string) {
+  const { data } = await api.post<{ answer: string; sources: string[]; advisory?: string }>(`/cases/${caseId}/qa`, { question });
+  return data;
+}

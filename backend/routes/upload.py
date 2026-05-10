@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from pathlib import Path
 import shutil
@@ -83,5 +84,50 @@ async def list_evidence(case_id: str, db: Session = Depends(get_db)):
     evidence = db.query(Evidence).filter(
         Evidence.case_id == case_id
     ).order_by(Evidence.uploaded_at.desc()).all()
-    
+
     return evidence
+
+
+@router.get("/{case_id}/evidence/{file_id}/download")
+async def download_evidence(case_id: str, file_id: int, db: Session = Depends(get_db)):
+    """Download an evidence file"""
+    evidence = db.query(Evidence).filter(
+        Evidence.id == file_id,
+        Evidence.case_id == case_id
+    ).first()
+    if not evidence:
+        raise HTTPException(status_code=404, detail="Evidence file not found")
+
+    file_path = Path(evidence.file_path)
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found on disk")
+
+    return FileResponse(
+        path=file_path,
+        media_type="application/octet-stream",
+        filename=evidence.file_name
+    )
+
+
+@router.delete("/{case_id}/evidence/{file_id}")
+async def delete_evidence_file(case_id: str, file_id: int, db: Session = Depends(get_db)):
+    """Delete an evidence file from a case"""
+    evidence = db.query(Evidence).filter(
+        Evidence.id == file_id,
+        Evidence.case_id == case_id
+    ).first()
+    if not evidence:
+        raise HTTPException(status_code=404, detail="Evidence file not found")
+
+    try:
+        file_path = Path(evidence.file_path).resolve()
+        upload_root = Path(settings.upload_dir).resolve()
+        if upload_root in file_path.parents and file_path.exists():
+            file_path.unlink()
+    except Exception:
+        pass
+
+    db.delete(evidence)
+    db.commit()
+    log_info(f"[OK] Evidence file deleted: {evidence.file_name} from case {case_id}")
+    return {"message": f"Evidence file {evidence.file_name} deleted"}
