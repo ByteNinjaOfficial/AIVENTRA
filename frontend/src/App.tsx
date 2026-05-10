@@ -9,7 +9,6 @@ import {
   Database,
   FileScan,
   Fingerprint,
-  Gauge,
   LayoutDashboard,
   Map,
   Radar,
@@ -23,28 +22,8 @@ import {
   Trash2
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  PolarAngleAxis,
-  PolarGrid,
-  Radar as RadarChartShape,
-  RadarChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis
-} from "recharts";
 import { analyzeCase, createCase, deleteCase, getAnalysisResults, getCases, getReport, getReportDocumentUrl, uploadEvidence } from "@/lib/api";
-import { activityData, confidenceData, mockCases, mockReport, mockTimeline, riskData } from "@/lib/mock-data";
+import { mockCases, mockReport, mockTimeline } from "@/lib/mock-data";
 import type { CaseRecord, CaseReport } from "@/lib/types";
 import { cn, delay, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -93,7 +72,6 @@ type CaseForm = {
 };
 
 export default function App() {
-  const [intro, setIntro] = useState(true);
   const [cases, setCases] = useState<CaseRecord[]>(mockCases);
   const [selectedCase, setSelectedCase] = useState<CaseReport>(mockReport);
   const [flowOpen, setFlowOpen] = useState(false);
@@ -103,9 +81,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("Dashboard");
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setIntro(false), 2400);
     refreshCases();
-    return () => window.clearTimeout(timer);
   }, []);
 
   async function refreshCases() {
@@ -130,15 +106,6 @@ export default function App() {
 
   const intelligence = selectedCase?.structured_report?.investigative_intelligence || selectedCase?.investigative_intelligence;
   const timeline = selectedCase?.structured_report?.timeline_analysis?.events || selectedCase?.timeline || mockTimeline;
-  const riskScore = selectedCase?.structured_report?.risk_assessment?.risk_score || selectedCase?.risk_score || 0;
-  const confidenceRows = useMemo(
-    () =>
-      confidenceData.map((row) => ({
-        ...row,
-        score: row.name === "Risk" ? Math.max(row.score, riskScore) : row.score
-      })),
-    [riskScore]
-  );
 
   async function loadCase(caseId: string) {
     try {
@@ -151,10 +118,8 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen overflow-hidden bg-radial-grid text-foreground">
-      <BackgroundFX />
-      <AnimatePresence>{intro ? <IntroScanner /> : null}</AnimatePresence>
-      <div className="relative z-10 flex min-h-screen">
+    <div className="min-h-screen overflow-hidden bg-[#0B1220] text-foreground">
+      <div className="flex min-h-screen">
         <Sidebar activeTab={activeTab} onTabSelect={setActiveTab} />
         <main className="min-w-0 flex-1 px-4 py-4 md:px-6 lg:px-8">
           <Topbar onCreate={() => setFlowOpen(true)} />
@@ -166,19 +131,16 @@ export default function App() {
           >
             {activeTab === "Dashboard" ? (
               <>
-                <HeroCommand selectedCase={selectedCase} onCreate={() => setFlowOpen(true)} />
+                <DashboardHeader caseCount={cases.length} onCreate={() => setFlowOpen(true)} />
                 <MetricGrid cases={cases} />
-                <div className="mt-6 grid gap-6 2xl:grid-cols-[1.15fr_.85fr]">
-                  <CommandAnalytics riskScore={riskScore} confidenceRows={confidenceRows} />
-                  <HeatmapPanel />
-                </div>
-                <div className="mt-6">
-                  <CasesPanel 
+                <div className="mt-5 grid gap-5 2xl:grid-cols-[minmax(0,1fr)_320px]">
+                  <InvestigationTable
                     cases={cases} 
                     selected={selectedCase?.case_id} 
                     onSelect={(id) => { loadCase(id); setActiveTab("Case Details"); }} 
                     onDelete={handleDeleteCase}
                   />
+                  <ActivityFeed cases={cases} selectedCase={selectedCase} />
                 </div>
               </>
             ) : activeTab === "Case Details" ? (
@@ -234,76 +196,12 @@ export default function App() {
   );
 }
 
-function BackgroundFX() {
-  return (
-    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-      <div className="grid-overlay absolute inset-0 opacity-60" />
-      {Array.from({ length: 24 }).map((_, index) => (
-        <motion.span
-          key={index}
-          className="absolute h-1 w-1 rounded-full bg-cyan-300/70 shadow-[0_0_18px_rgba(34,211,238,.9)]"
-          style={{ left: `${(index * 37) % 100}%`, top: `${(index * 19) % 100}%` }}
-          animate={{ y: [0, -22, 0], opacity: [0.25, 1, 0.25] }}
-          transition={{ duration: 4 + (index % 5), repeat: Infinity, delay: index * 0.13 }}
-        />
-      ))}
-      <div className="absolute -left-28 top-20 h-80 w-80 rounded-full bg-cyan-400/15 blur-3xl" />
-      <div className="absolute right-0 top-1/4 h-96 w-96 rounded-full bg-violet-500/15 blur-3xl" />
-      <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
-    </div>
-  );
-}
-
-function IntroScanner() {
-  return (
-    <motion.div
-      className="fixed inset-0 z-50 grid place-items-center bg-[#050814]"
-      exit={{ opacity: 0, scale: 1.04 }}
-      transition={{ duration: 0.7 }}
-    >
-      <div className="scanline relative flex h-72 w-[min(92vw,560px)] flex-col items-center justify-center overflow-hidden rounded-3xl border border-cyan-300/25 bg-slate-950/70 shadow-[0_0_80px_rgba(34,211,238,.16)]">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          className="grid h-20 w-20 place-items-center rounded-3xl border border-cyan-300/30 bg-cyan-300/10"
-        >
-          <Fingerprint className="h-10 w-10 text-cyan-200" />
-        </motion.div>
-        <motion.h1
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
-          className="mt-6 text-4xl font-black tracking-[0.18em] text-white"
-        >
-          ForensiAI
-        </motion.h1>
-        <TypingLine text="AI-Powered Forensic Intelligence Platform" />
-      </div>
-    </motion.div>
-  );
-}
-
-function TypingLine({ text }: { text: string }) {
-  const [shown, setShown] = useState("");
-  useEffect(() => {
-    let i = 0;
-    const timer = window.setInterval(() => {
-      i += 1;
-      setShown(text.slice(0, i));
-      if (i >= text.length) window.clearInterval(timer);
-    }, 38);
-    return () => window.clearInterval(timer);
-  }, [text]);
-  return <p className="mt-3 min-h-6 text-sm tracking-[0.2em] text-cyan-200">{shown}<span className="animate-pulse">|</span></p>;
-}
-
 function Sidebar({ activeTab, onTabSelect }: { activeTab: string; onTabSelect: (tab: string) => void }) {
   return (
-    <aside className="hidden w-72 shrink-0 border-r border-white/10 bg-slate-950/35 p-5 backdrop-blur-2xl lg:block">
+    <aside className="hidden w-72 shrink-0 border-r border-slate-800 bg-[#0F172A] p-5 lg:block">
       <div className="flex items-center gap-3">
-        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-cyan-300/10 ring-1 ring-cyan-300/30">
-          <Command className="h-6 w-6 text-cyan-200" />
+        <div className="grid h-12 w-12 place-items-center rounded-lg border border-slate-700 bg-slate-900">
+          <Command className="h-6 w-6 text-sky-300" />
         </div>
         <div>
           <p className="text-lg font-black tracking-wide text-white">ForensiAI</p>
@@ -319,8 +217,8 @@ function Sidebar({ activeTab, onTabSelect }: { activeTab: string; onTabSelect: (
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.06 * index }}
             className={cn(
-              "flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-cyan-300/10 hover:text-white",
-              activeTab === item.label && "bg-cyan-300/12 text-cyan-100 ring-1 ring-cyan-300/20"
+              "flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white",
+              activeTab === item.label && "bg-slate-800 text-sky-100 ring-1 ring-slate-700"
             )}
           >
             <item.icon className="h-5 w-5" />
@@ -328,9 +226,9 @@ function Sidebar({ activeTab, onTabSelect }: { activeTab: string; onTabSelect: (
           </motion.button>
         ))}
       </nav>
-      <div className="mt-8 rounded-3xl border border-cyan-300/15 bg-cyan-300/8 p-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-cyan-100">
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(52,211,153,.9)]" />
+      <div className="mt-8 rounded-lg border border-slate-700 bg-slate-900 p-4">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-100">
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
           System Online
         </div>
         <p className="mt-3 text-xs leading-5 text-slate-400">Backend connected. AI risk engine and report generator are ready for demo review.</p>
@@ -341,16 +239,16 @@ function Sidebar({ activeTab, onTabSelect }: { activeTab: string; onTabSelect: (
 
 function Topbar({ onCreate }: { onCreate: () => void }) {
   return (
-    <header className="glass sticky top-4 z-30 flex flex-col gap-3 rounded-3xl px-4 py-3 md:flex-row md:items-center md:justify-between">
-      <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-2">
-        <Search className="h-4 w-4 text-cyan-200" />
+    <header className="glass sticky top-4 z-30 flex flex-col gap-3 rounded-lg px-4 py-3 md:flex-row md:items-center md:justify-between">
+      <div className="flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-slate-700 bg-slate-950/40 px-3 py-2">
+        <Search className="h-4 w-4 text-sky-300" />
         <input className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-500" placeholder="Search case ID, evidence, vehicle, location..." />
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <Badge tone="green" className="gap-2"><span className="h-2 w-2 rounded-full bg-emerald-300" /> Live AI Processing</Badge>
         <Button variant="secondary" className="h-10 w-10 px-0"><Bell className="h-4 w-4" /></Button>
-        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
-          <UserCircle2 className="h-5 w-5 text-cyan-200" />
+        <div className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2">
+          <UserCircle2 className="h-5 w-5 text-sky-300" />
           <span className="text-sm font-semibold">Investigator</span>
         </div>
         <Button onClick={onCreate}><Sparkles className="h-4 w-4" /> Create New Case</Button>
@@ -362,12 +260,11 @@ function Topbar({ onCreate }: { onCreate: () => void }) {
 function HeroCommand({ selectedCase, onCreate }: { selectedCase: CaseReport; onCreate: () => void }) {
   return (
     <Card className="relative overflow-hidden p-0">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(34,211,238,.22),transparent_28%),radial-gradient(circle_at_80%_20%,rgba(139,92,246,.22),transparent_30%)]" />
       <div className="relative grid gap-6 p-6 lg:grid-cols-[1.35fr_.65fr] lg:p-8">
         <div>
           <Badge tone="cyan">Forensic Intelligence Operations</Badge>
-          <h1 className="mt-5 max-w-4xl text-4xl font-black leading-tight text-white md:text-6xl">
-            Real-time AI command center for high-risk investigations.
+          <h1 className="mt-5 max-w-4xl text-3xl font-bold leading-tight text-white md:text-4xl">
+            Investigation command center
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-7 text-slate-300">
             Track evidence, reconstruct timelines, surface anomalies, and convert forensic data into investigator-ready intelligence.
@@ -379,14 +276,7 @@ function HeroCommand({ selectedCase, onCreate }: { selectedCase: CaseReport; onC
             </Button>
           </div>
         </div>
-        <div className="scanline relative min-h-72 overflow-hidden rounded-3xl border border-cyan-300/20 bg-slate-950/45 p-5">
-          <div className="absolute inset-8 rounded-full border border-cyan-300/10" />
-          <div className="absolute inset-14 rounded-full border border-violet-300/10" />
-          <motion.div
-            className="absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-300/30"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-          />
+        <div className="relative min-h-64 overflow-hidden rounded-lg border border-slate-700 bg-slate-950/45 p-5">
           <div className="relative z-10 flex h-full flex-col justify-between">
             <Badge tone="red">Risk {selectedCase.risk_score}/100</Badge>
             <div>
@@ -401,107 +291,52 @@ function HeroCommand({ selectedCase, onCreate }: { selectedCase: CaseReport; onC
   );
 }
 
+function DashboardHeader({ caseCount, onCreate }: { caseCount: number; onCreate: () => void }) {
+  return (
+    <div className="rounded-lg border border-[#2A3138] bg-[#171A1D] px-5 py-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7C9B8A]">Operations Queue</p>
+          <h1 className="mt-2 text-2xl font-semibold text-[#E6E9EC]">Dashboard</h1>
+          <p className="mt-1 text-sm text-[#AAB3BB]">{caseCount} investigation records loaded from the case service.</p>
+        </div>
+        <Button onClick={onCreate} className="bg-[#7C9B8A] text-[#111315] hover:bg-[#8bad9a]">
+          <UploadCloud className="h-4 w-4" /> Open Investigation Flow
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function MetricGrid({ cases }: { cases: CaseRecord[] }) {
-  const metrics = [
-    { label: "Total Cases", value: cases.length || 24, icon: FileScan, color: "cyan" },
-    { label: "Active Investigations", value: cases.filter((c) => c.status !== "completed").length || 8, icon: Activity, color: "violet" },
-    { label: "High-Risk Cases", value: cases.filter((c) => c.risk_level === "HIGH").length || 6, icon: Siren, color: "red" },
-    { label: "Evidence Processed", value: 148, icon: Database, color: "cyan" },
-    { label: "AI Correlations", value: 37, icon: BrainCircuit, color: "violet" },
-    { label: "Timelines Built", value: 19, icon: Map, color: "cyan" }
-  ];
+  const metrics = useMemo(() => {
+    const active = cases.filter((item) => !["completed", "archived"].includes(item.status.toLowerCase())).length;
+    const pending = cases.filter((item) => ["processing", "pending", "pending_review", "under_review"].includes(item.status.toLowerCase())).length;
+    const highRisk = cases.filter((item) => item.risk_level === "HIGH").length;
+    const completed = cases.filter((item) => item.status.toLowerCase() === "completed").length;
+    return [
+      { label: "Active Cases", value: active, icon: Activity },
+      { label: "Pending Review", value: pending, icon: FileScan },
+      { label: "High Risk", value: highRisk, icon: Siren },
+      { label: "Completed", value: completed, icon: Database }
+    ];
+  }, [cases]);
+
   return (
-    <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-      {metrics.map((metric, index) => (
-        <motion.div key={metric.label} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.06 }}>
-          <Card className="group overflow-hidden hover:-translate-y-1 hover:border-cyan-300/35">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <metric.icon className={cn("h-5 w-5", metric.color === "red" ? "text-rose-300" : metric.color === "violet" ? "text-violet-300" : "text-cyan-200")} />
-                <MiniTrend />
-              </div>
-              <p className="mt-5 text-3xl font-black text-white">{metric.value}</p>
-              <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-400">{metric.label}</p>
-            </CardContent>
-          </Card>
-        </motion.div>
+    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {metrics.map((metric) => (
+        <Card key={metric.label} className="border-[#2A3138] bg-[#171A1D]">
+          <CardContent className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-2xl font-semibold text-[#E6E9EC]">{metric.value}</p>
+              <p className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-[#AAB3BB]">{metric.label}</p>
+            </div>
+            <div className="grid h-10 w-10 place-items-center rounded-md border border-[#2A3138] bg-[#1E2328]">
+              <metric.icon className="h-5 w-5 text-[#7C9B8A]" />
+            </div>
+          </CardContent>
+        </Card>
       ))}
-    </div>
-  );
-}
-
-function MiniTrend() {
-  return (
-    <div className="h-8 w-16">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={activityData.slice(0, 5)}>
-          <Area type="monotone" dataKey="ai" stroke="#22D3EE" fill="rgba(34,211,238,.18)" strokeWidth={2} />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function CommandAnalytics({ riskScore, confidenceRows }: { riskScore: number; confidenceRows: Array<{ name: string; score: number }> }) {
-  return (
-    <div className="grid gap-6 xl:grid-cols-2">
-      <Card>
-        <CardHeader><CardTitle>Investigation Activity</CardTitle></CardHeader>
-        <CardContent className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={activityData}>
-              <CartesianGrid stroke="rgba(148,163,184,.12)" vertical={false} />
-              <XAxis dataKey="day" stroke="#94A3B8" />
-              <YAxis stroke="#94A3B8" />
-              <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid rgba(255,255,255,.12)", borderRadius: 14 }} />
-              <Line type="monotone" dataKey="cases" stroke="#38BDF8" strokeWidth={3} dot={false} />
-              <Line type="monotone" dataKey="ai" stroke="#8B5CF6" strokeWidth={3} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader><CardTitle>Risk Distribution</CardTitle></CardHeader>
-        <CardContent className="grid h-72 place-items-center">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={riskData} dataKey="value" nameKey="name" innerRadius={62} outerRadius={94} paddingAngle={6}>
-                {riskData.map((entry) => <Cell key={entry.name} fill={entry.fill} />)}
-              </Pie>
-              <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid rgba(255,255,255,.12)", borderRadius: 14 }} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="pointer-events-none absolute text-center">
-            <p className="text-3xl font-black text-white">{Math.round(riskScore)}</p>
-            <p className="text-xs text-slate-400">live risk</p>
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader><CardTitle>AI Confidence Scores</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          {confidenceRows.map((item) => (
-            <div key={item.name}>
-              <div className="mb-2 flex justify-between text-sm"><span>{item.name}</span><span className="text-cyan-200">{item.score}%</span></div>
-              <Progress value={item.score} tone={item.name === "Risk" ? "red" : "cyan"} />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader><CardTitle>Investigation Progress Tracker</CardTitle></CardHeader>
-        <CardContent>
-          {["Case opened", "Evidence parsed", "Timeline built", "Risk scored", "Report generated"].map((item, index) => (
-            <div key={item} className="flex items-center gap-3 pb-4 last:pb-0">
-              <div className="grid h-8 w-8 place-items-center rounded-full bg-cyan-300/15 text-xs font-bold text-cyan-100 ring-1 ring-cyan-300/25">{index + 1}</div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-white">{item}</p>
-                <Progress value={100} tone={index > 2 ? "violet" : "cyan"} />
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
     </div>
   );
 }
@@ -547,7 +382,7 @@ function TimelinePanel({ timeline }: { timeline: CaseReport["timeline"] }) {
       <CardContent className="space-y-4">
         {events.map((event, index) => (
           <motion.div key={`${event.timestamp}-${index}`} initial={{ opacity: 0, x: -18 }} whileInView={{ opacity: 1, x: 0 }} className="relative border-l border-cyan-300/20 pl-5">
-            <span className="absolute -left-2 top-1 h-4 w-4 rounded-full bg-cyan-300 shadow-[0_0_18px_rgba(34,211,238,.9)]" />
+            <span className="absolute -left-2 top-1 h-4 w-4 rounded-full bg-sky-300" />
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={event.severity === "high" ? "red" : "cyan"}>{event.source}</Badge>
@@ -574,33 +409,28 @@ function CorrelationNetwork() {
     <Card>
       <CardHeader><CardTitle>Evidence Correlation Network</CardTitle></CardHeader>
       <CardContent>
-        <div className="relative h-[420px] overflow-hidden rounded-3xl border border-white/10 bg-slate-950/45">
+        <div className="relative h-[420px] overflow-hidden rounded-lg border border-slate-700 bg-slate-950/45">
           <svg className="absolute inset-0 h-full w-full">
             {[[0, 1], [0, 2], [1, 3], [2, 4], [3, 4], [1, 4]].map(([a, b], index) => (
-              <motion.line
+              <line
                 key={`${a}-${b}`}
                 x1={nodes[a].x}
                 y1={nodes[a].y}
                 x2={nodes[b].x}
                 y2={nodes[b].y}
-                stroke="rgba(34,211,238,.35)"
+                stroke="rgba(148,163,184,.38)"
                 strokeWidth="2"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 1.2, delay: index * 0.15, repeat: Infinity, repeatType: "reverse", repeatDelay: 3 }}
               />
             ))}
           </svg>
           {nodes.map((node, index) => (
-            <motion.div
+            <div
               key={node.label}
-              className="absolute grid h-24 w-24 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-cyan-300/30 bg-cyan-300/10 text-center text-xs font-bold text-cyan-100 shadow-glow"
+              className="absolute grid h-24 w-24 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-slate-600 bg-slate-900 text-center text-xs font-bold text-slate-100"
               style={{ left: node.x, top: node.y }}
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 3, repeat: Infinity, delay: index * 0.25 }}
             >
               {node.label}
-            </motion.div>
+            </div>
           ))}
         </div>
       </CardContent>
@@ -608,56 +438,226 @@ function CorrelationNetwork() {
   );
 }
 
-function HeatmapPanel() {
-  const cells = Array.from({ length: 49 }, (_, index) => (index * 17 + 31) % 100);
+type CaseSortField = "case_id" | "name" | "risk_level" | "created_at" | "status";
+
+function InvestigationTable({
+  cases,
+  selected,
+  onSelect,
+  onDelete
+}: {
+  cases: CaseRecord[];
+  selected: string;
+  onSelect: (caseId: string) => void;
+  onDelete: (caseId: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [sortField, setSortField] = useState<CaseSortField>("created_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+
+  const rows = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return cases
+      .filter((item) => {
+        if (!normalizedQuery) return true;
+        return [
+          item.case_id,
+          getCaseName(item),
+          item.risk_level,
+          normalizeCaseStatus(item.status),
+          item.incident_location,
+          item.victim_name
+        ].some((value) => value.toLowerCase().includes(normalizedQuery));
+      })
+      .sort((a, b) => {
+        const first = getSortValue(a, sortField);
+        const second = getSortValue(b, sortField);
+        const result = first.localeCompare(second, undefined, { numeric: true, sensitivity: "base" });
+        return sortDirection === "asc" ? result : -result;
+      });
+  }, [cases, query, sortDirection, sortField]);
+
+  function updateSort(field: CaseSortField) {
+    if (field === sortField) {
+      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setSortField(field);
+    setSortDirection(field === "created_at" ? "desc" : "asc");
+  }
+
+  const headers: Array<{ label: string; field: CaseSortField }> = [
+    { label: "Case ID", field: "case_id" },
+    { label: "Case Name", field: "name" },
+    { label: "Priority", field: "risk_level" }
+  ];
+
   return (
-    <Card>
-      <CardHeader><CardTitle>Suspicious Activity Heatmap</CardTitle></CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-7 gap-2">
-          {cells.map((value, index) => (
-            <motion.div
-              key={index}
-              className="aspect-square rounded-xl border border-white/10"
-              style={{ backgroundColor: value > 72 ? `rgba(251,59,100,${value / 120})` : `rgba(34,211,238,${value / 180})` }}
-              whileHover={{ scale: 1.08 }}
-            />
-          ))}
+    <Card className="border-[#2A3138] bg-[#171A1D]">
+      <CardHeader className="flex flex-col gap-3 border-b border-[#2A3138] sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <CardTitle className="text-[#E6E9EC]">Active Investigations</CardTitle>
+          <p className="mt-1 text-sm text-[#AAB3BB]">Open a case to continue evidence review, analysis, and report work.</p>
+        </div>
+        <div className="flex min-w-0 items-center gap-2 rounded-md border border-[#2A3138] bg-[#111315] px-3 py-2 sm:w-72">
+          <Search className="h-4 w-4 shrink-0 text-[#7C9B8A]" />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            className="min-w-0 flex-1 bg-transparent text-sm text-[#E6E9EC] outline-none placeholder:text-[#AAB3BB]/70"
+            placeholder="Search investigations"
+          />
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="thin-scrollbar overflow-x-auto">
+          <table className="w-full min-w-[860px] text-left text-sm">
+            <thead className="border-b border-[#2A3138] bg-[#1E2328] text-xs uppercase tracking-[0.14em] text-[#AAB3BB]">
+              <tr>
+                {headers.map((header) => (
+                  <th key={header.field} className="px-4 py-3 font-semibold">
+                    <button className="flex items-center gap-2 transition hover:text-[#E6E9EC]" onClick={() => updateSort(header.field)}>
+                      {header.label}
+                      {sortField === header.field ? <span className="text-[#7C9B8A]">{sortDirection === "asc" ? "Asc" : "Desc"}</span> : null}
+                    </button>
+                  </th>
+                ))}
+                <th className="px-4 py-3 font-semibold">Assigned Investigator</th>
+                <th className="px-4 py-3 font-semibold">
+                  <button className="flex items-center gap-2 transition hover:text-[#E6E9EC]" onClick={() => updateSort("created_at")}>
+                    Last Updated
+                    {sortField === "created_at" ? <span className="text-[#7C9B8A]">{sortDirection === "asc" ? "Asc" : "Desc"}</span> : null}
+                  </button>
+                </th>
+                <th className="px-4 py-3 font-semibold">
+                  <button className="flex items-center gap-2 transition hover:text-[#E6E9EC]" onClick={() => updateSort("status")}>
+                    Status
+                    {sortField === "status" ? <span className="text-[#7C9B8A]">{sortDirection === "asc" ? "Asc" : "Desc"}</span> : null}
+                  </button>
+                </th>
+                <th className="px-4 py-3 text-right font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#2A3138]">
+              {rows.map((item) => (
+                <tr
+                  key={item.case_id}
+                  className={cn(
+                    "group cursor-pointer bg-[#171A1D] transition hover:bg-[#1E2328]",
+                    selected === item.case_id && "bg-[#1E2328]"
+                  )}
+                  onClick={() => onSelect(item.case_id)}
+                >
+                  <td className="px-4 py-3 font-mono text-xs font-semibold text-[#E6E9EC]">{item.case_id}</td>
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-[#E6E9EC]">{getCaseName(item)}</p>
+                    <p className="mt-1 text-xs text-[#AAB3BB]">{item.incident_location}</p>
+                  </td>
+                  <td className="px-4 py-3"><PriorityBadge riskLevel={item.risk_level} /></td>
+                  <td className="px-4 py-3 text-[#AAB3BB]">Unassigned</td>
+                  <td className="px-4 py-3 text-[#AAB3BB]">{formatDate(item.created_at || item.incident_date)}</td>
+                  <td className="px-4 py-3"><StatusBadge status={item.status} /></td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onDelete(item.case_id);
+                      }}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#A65A5A]/35 text-[#A65A5A] transition hover:bg-[#A65A5A]/10"
+                      title="Delete case"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!rows.length ? (
+            <div className="border-t border-[#2A3138] px-4 py-10 text-center text-sm text-[#AAB3BB]">No investigations match the current search.</div>
+          ) : null}
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function CasesPanel({ cases, selected, onSelect, onDelete }: { cases: CaseRecord[]; selected: string; onSelect: (caseId: string) => void; onDelete: (caseId: string) => void }) {
+function ActivityFeed({ cases, selectedCase }: { cases: CaseRecord[]; selectedCase: CaseReport }) {
+  const items = useMemo(() => {
+    const caseEvents = cases.slice(0, 5).map((item) => ({
+      id: `${item.case_id}-${item.status}`,
+      title: normalizeCaseStatus(item.status) === "Completed" ? "Report available" : "Case queued",
+      description: `${item.case_id} · ${getCaseName(item)}`,
+      timestamp: item.created_at || item.incident_date,
+      tone: item.risk_level === "HIGH" ? "red" : item.risk_level === "MEDIUM" ? "yellow" : "green"
+    }));
+
+    const reportEvents = selectedCase?.generated_at
+      ? [{
+          id: `${selectedCase.case_id}-report`,
+          title: "Selected case refreshed",
+          description: `${selectedCase.case_id} report data loaded`,
+          timestamp: selectedCase.generated_at,
+          tone: selectedCase.risk_level === "HIGH" ? "red" : "green"
+        }]
+      : [];
+
+    return [...reportEvents, ...caseEvents].slice(0, 6);
+  }, [cases, selectedCase]);
+
   return (
-    <Card>
-      <CardHeader><CardTitle>Active Case Queue</CardTitle></CardHeader>
-      <CardContent className="space-y-3">
-        {cases.slice(0, 6).map((item) => (
-          <div key={item.case_id} className="flex gap-2">
-            <button
-              onClick={() => onSelect(item.case_id)}
-              className={cn("flex flex-1 items-center justify-between rounded-2xl border p-4 text-left transition", selected === item.case_id ? "border-cyan-300/35 bg-cyan-300/10" : "border-white/10 bg-white/[0.04] hover:bg-white/[0.08]")}
-            >
-              <div>
-                <p className="font-semibold text-white">{item.case_id}</p>
-                <p className="mt-1 text-sm text-slate-400">{item.victim_name} · {item.incident_location}</p>
-              </div>
-              <Badge tone={item.risk_level === "HIGH" ? "red" : item.risk_level === "MEDIUM" ? "yellow" : "green"}>{item.risk_level}</Badge>
-            </button>
-            <button 
-              onClick={(e) => { e.stopPropagation(); onDelete(item.case_id); }}
-              className="flex items-center justify-center p-4 rounded-2xl border border-red-500/20 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition"
-              title="Delete Case"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
+    <Card className="border-[#2A3138] bg-[#171A1D]">
+      <CardHeader className="border-b border-[#2A3138]">
+        <CardTitle className="text-[#E6E9EC]">Recent Activity</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 p-4">
+        {items.map((item) => (
+          <div key={item.id} className="rounded-md border border-[#2A3138] bg-[#1E2328] p-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-medium text-[#E6E9EC]">{item.title}</p>
+              <Badge tone={item.tone as "red" | "yellow" | "green"}>{item.tone}</Badge>
+            </div>
+            <p className="mt-2 text-xs leading-5 text-[#AAB3BB]">{item.description}</p>
+            <p className="mt-2 text-xs text-[#AAB3BB]/75">{formatDate(item.timestamp)}</p>
           </div>
         ))}
+        {!items.length ? <p className="text-sm text-[#AAB3BB]">No activity from the case service yet.</p> : null}
       </CardContent>
     </Card>
   );
+}
+
+function getCaseName(item: CaseRecord) {
+  const titleMatch = item.notes?.match(/Case Title:\s*(.+)/i);
+  if (titleMatch?.[1]) return titleMatch[1].trim();
+  if (item.victim_name && item.incident_location) return `${item.victim_name} investigation`;
+  return item.case_id;
+}
+
+function getSortValue(item: CaseRecord, field: CaseSortField) {
+  if (field === "name") return getCaseName(item);
+  if (field === "created_at") return item.created_at || item.incident_date || "";
+  return String(item[field] || "");
+}
+
+function normalizeCaseStatus(status: string) {
+  return status
+    .replace(/_/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function PriorityBadge({ riskLevel }: { riskLevel: string }) {
+  const tone = riskLevel === "HIGH" ? "red" : riskLevel === "MEDIUM" ? "yellow" : "green";
+  return <Badge tone={tone}>{riskLevel || "LOW"}</Badge>;
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const normalized = normalizeCaseStatus(status || "active");
+  const tone = normalized === "Completed" ? "green" : normalized === "Archived" ? "slate" : normalized.includes("Review") ? "yellow" : "cyan";
+  return <Badge tone={tone}>{normalized}</Badge>;
 }
 
 function CaseFlowDialog({
@@ -743,9 +743,9 @@ function CaseFlowDialog({
   return (
     <AnimatePresence>
       {open ? (
-        <motion.div className="fixed inset-0 z-40 grid place-items-center bg-slate-950/70 p-4 backdrop-blur-xl" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        <motion.div className="fixed inset-0 z-40 grid place-items-center bg-slate-950/80 p-4 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <motion.div
-            className="glass thin-scrollbar max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] p-5 shadow-[0_0_90px_rgba(34,211,238,.18)] md:p-7"
+            className="glass thin-scrollbar max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-lg p-5 md:p-7"
             initial={{ opacity: 0, scale: 0.92, y: 24 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 16 }}
@@ -807,10 +807,9 @@ function CaseFlowDialog({
 
               {step === "analysis" ? (
                 <motion.div key="analysis" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-6 grid gap-6 lg:grid-cols-[.8fr_1.2fr]">
-                  <div className="scanline relative grid min-h-96 place-items-center overflow-hidden rounded-3xl border border-cyan-300/20 bg-slate-950/50">
-                    <motion.div className="h-52 w-52 rounded-full border border-cyan-300/30" animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} />
+                  <div className="relative grid min-h-96 place-items-center overflow-hidden rounded-lg border border-slate-700 bg-slate-950/50">
                     <div className="absolute text-center">
-                      <BrainCircuit className="mx-auto h-12 w-12 text-cyan-200" />
+                      <BrainCircuit className="mx-auto h-12 w-12 text-sky-300" />
                       <p className="mt-4 text-4xl font-black">{progress}%</p>
                       <p className="text-sm text-slate-400">AI forensic scan</p>
                     </div>

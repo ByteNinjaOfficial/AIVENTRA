@@ -35,11 +35,11 @@ export const CustomTimelineNode = memo(({ data, selected }: { data: { event: Tim
     <div className={cn(
       "relative min-w-[280px] max-w-[320px] rounded-xl bg-slate-900/90 border p-4 shadow-lg backdrop-blur-md transition-all",
       borderColor,
-      selected ? "ring-2 ring-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.4)]" : "",
-      isHighRisk ? "shadow-[0_0_15px_rgba(239,68,68,0.3)]" : ""
+      selected ? "ring-2 ring-cyan-400" : "",
+      isHighRisk ? "border-red-500/60" : ""
     )}>
       {isHighRisk && (
-        <div className="absolute -inset-1 rounded-xl border border-red-500/30 animate-pulse pointer-events-none" />
+        <div className="absolute -inset-1 rounded-xl border border-red-500/30 pointer-events-none" />
       )}
       <Handle type="target" position={Position.Left} className="w-2 h-2 bg-slate-400 border-none" />
       
@@ -72,11 +72,11 @@ export const CustomRiskNode = memo(({ data, selected }: { data: { flag: RiskFlag
   return (
     <div className={cn(
       "relative min-w-[280px] max-w-[320px] rounded-xl bg-slate-900/90 border border-red-500/50 p-4 shadow-lg backdrop-blur-md transition-all",
-      selected ? "ring-2 ring-red-400 shadow-[0_0_30px_rgba(239,68,68,0.5)]" : "shadow-[0_0_15px_rgba(239,68,68,0.2)]",
-      isHighRisk ? "shadow-[0_0_25px_rgba(239,68,68,0.6)]" : ""
+      selected ? "ring-2 ring-red-400" : "",
+      isHighRisk ? "border-red-400" : ""
     )}>
       {isHighRisk && (
-        <div className="absolute -inset-1 rounded-xl border border-red-500/50 animate-pulse pointer-events-none" />
+        <div className="absolute -inset-1 rounded-xl border border-red-500/50 pointer-events-none" />
       )}
       <Handle type="target" position={Position.Left} className="w-2 h-2 bg-red-400 border-none" />
       
@@ -107,7 +107,7 @@ export const CustomHypothesisNode = memo(({ data, selected }: { data: { hypothes
   return (
     <div className={cn(
       "relative min-w-[320px] max-w-[380px] rounded-xl bg-slate-900/90 border border-amber-500/60 p-4 shadow-lg backdrop-blur-md transition-all",
-      selected ? "ring-2 ring-amber-400 shadow-[0_0_40px_rgba(251,191,36,0.6)]" : "shadow-[0_0_20px_rgba(251,191,36,0.25)]"
+      selected ? "ring-2 ring-amber-400" : ""
     )}>
       <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-amber-500/15 to-transparent pointer-events-none" />
       <Handle type="target" position={Position.Left} className="w-2 h-2 bg-amber-400 border-none" />
@@ -137,7 +137,7 @@ export const CustomStoryNode = memo(({ data, selected }: { data: { story: string
   return (
     <div className={cn(
       "relative min-w-[380px] max-w-[480px] rounded-xl bg-slate-900/90 border border-sky-500/50 p-5 shadow-lg backdrop-blur-md transition-all",
-      selected ? "ring-2 ring-sky-400 shadow-[0_0_30px_rgba(56,189,248,0.5)]" : "shadow-[0_0_15px_rgba(56,189,248,0.2)]"
+      selected ? "ring-2 ring-sky-400" : ""
     )}>
       <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-sky-500/10 to-transparent pointer-events-none" />
       
@@ -165,21 +165,21 @@ export const CustomStoryBeatNode = memo(({ data, selected }: { data: { beat: { t
 
   let borderColor = 'border-cyan-500/50';
   let badgeColor = 'bg-cyan-500/20 text-cyan-200';
-  let ringColor = 'ring-cyan-400 shadow-[0_0_30px_rgba(34,211,238,0.5)]';
-  let shadowColor = 'shadow-[0_0_15px_rgba(34,211,238,0.2)]';
+  let ringColor = 'ring-cyan-400';
+  let selectedColor = '';
   let pulse = false;
   let sizeClass = 'min-w-[320px] max-w-[360px]';
 
   if (phase === 'suspicious') {
     borderColor = 'border-amber-500/50';
     badgeColor = 'bg-amber-500/20 text-amber-200';
-    ringColor = 'ring-amber-400 shadow-[0_0_30px_rgba(245,158,11,0.5)]';
-    shadowColor = 'shadow-[0_0_15px_rgba(245,158,11,0.3)]';
+    ringColor = 'ring-amber-400';
+    selectedColor = '';
   } else if (phase === 'critical') {
     borderColor = 'border-red-500/60';
     badgeColor = 'bg-red-500/20 text-red-200';
-    ringColor = 'ring-red-400 shadow-[0_0_40px_rgba(239,68,68,0.6)]';
-    shadowColor = 'shadow-[0_0_20px_rgba(239,68,68,0.4)]';
+    ringColor = 'ring-red-400';
+    selectedColor = 'border-red-400';
     pulse = true;
     sizeClass = 'min-w-[380px] max-w-[420px] scale-105';
   }
@@ -189,10 +189,10 @@ export const CustomStoryBeatNode = memo(({ data, selected }: { data: { beat: { t
       "relative rounded-xl bg-slate-900/90 border p-4 backdrop-blur-md transition-all",
       sizeClass,
       borderColor,
-      selected ? ringColor : shadowColor
+      selected ? cn("ring-2", ringColor) : selectedColor
     )}>
       {pulse && (
-        <div className="absolute -inset-1 rounded-xl border border-red-500/30 animate-pulse pointer-events-none" />
+        <div className="absolute -inset-1 rounded-xl border border-red-500/30 pointer-events-none" />
       )}
       <Handle type="target" position={Position.Left} className={cn("w-2 h-2 border-none", badgeColor.split(' ')[1])} />
       <Handle type="source" position={Position.Right} className={cn("w-2 h-2 border-none", badgeColor.split(' ')[1])} />
@@ -255,7 +255,7 @@ export const CustomPersonNode = memo(({ data, selected }: { data: InvestigationN
     <div className={cn(
       "relative min-w-[240px] max-w-[300px] rounded-xl bg-slate-900/90 border p-4 shadow-lg backdrop-blur-md transition-all",
       style.border,
-      selected ? "ring-2 ring-rose-400 shadow-[0_0_20px_rgba(251,113,133,0.4)]" : ""
+      selected ? "ring-2 ring-rose-400" : ""
     )}>
       <Handle type="target" position={Position.Left} className="w-2 h-2 bg-rose-400 border-none" />
       <div className="flex items-start gap-3">
@@ -284,7 +284,7 @@ export const CustomLocationNode = memo(({ data, selected }: { data: Investigatio
     <div className={cn(
       "relative min-w-[240px] max-w-[300px] rounded-xl bg-slate-900/90 border p-4 shadow-lg backdrop-blur-md transition-all",
       style.border,
-      selected ? "ring-2 ring-red-400 shadow-[0_0_20px_rgba(248,113,113,0.4)]" : ""
+      selected ? "ring-2 ring-red-400" : ""
     )}>
       <Handle type="target" position={Position.Left} className="w-2 h-2 bg-red-400 border-none" />
       <div className="flex items-start gap-3">
@@ -313,7 +313,7 @@ export const CustomEvidenceNode = memo(({ data, selected }: { data: Investigatio
     <div className={cn(
       "relative min-w-[240px] max-w-[300px] rounded-xl bg-slate-900/90 border p-4 shadow-lg backdrop-blur-md transition-all",
       style.border,
-      selected ? "ring-2 ring-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.4)]" : ""
+      selected ? "ring-2 ring-cyan-400" : ""
     )}>
       <Handle type="target" position={Position.Left} className="w-2 h-2 bg-cyan-400 border-none" />
       <div className="flex items-start gap-3">
@@ -345,7 +345,7 @@ export const CustomNoteNode = memo(({ data, selected }: { data: InvestigationNod
     <div className={cn(
       "relative min-w-[220px] max-w-[280px] rounded-xl bg-slate-900/90 border p-4 shadow-lg backdrop-blur-md transition-all",
       style.border,
-      selected ? "ring-2 ring-slate-400 shadow-[0_0_20px_rgba(148,163,184,0.3)]" : ""
+      selected ? "ring-2 ring-slate-400" : ""
     )}>
       <Handle type="target" position={Position.Left} className="w-2 h-2 bg-slate-400 border-none" />
       <div className="flex items-start gap-3">
@@ -372,7 +372,7 @@ export const CustomHypothesisNode2 = memo(({ data, selected }: { data: Investiga
     <div className={cn(
       "relative min-w-[280px] max-w-[340px] rounded-xl bg-slate-900/90 border p-4 shadow-lg backdrop-blur-md transition-all",
       style.border,
-      selected ? "ring-2 ring-amber-400 shadow-[0_0_30px_rgba(251,191,36,0.5)]" : "shadow-[0_0_15px_rgba(251,191,36,0.15)]"
+      selected ? "ring-2 ring-amber-400" : ""
     )}>
       <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-amber-500/10 to-transparent pointer-events-none" />
       <Handle type="target" position={Position.Left} className="w-2 h-2 bg-amber-400 border-none" />
@@ -400,7 +400,7 @@ export const CustomContradictionNode = memo(({ data, selected }: { data: Investi
     <div className={cn(
       "relative min-w-[260px] max-w-[320px] rounded-xl bg-slate-900/90 border p-4 shadow-lg backdrop-blur-md transition-all",
       style.border,
-      selected ? "ring-2 ring-purple-400 shadow-[0_0_25px_rgba(168,85,247,0.5)]" : "shadow-[0_0_10px_rgba(168,85,247,0.15)]"
+      selected ? "ring-2 ring-purple-400" : ""
     )}>
       <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-purple-500/10 to-transparent pointer-events-none" />
       <Handle type="target" position={Position.Left} className="w-2 h-2 bg-purple-400 border-none" />

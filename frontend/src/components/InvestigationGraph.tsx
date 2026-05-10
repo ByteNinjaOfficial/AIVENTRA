@@ -265,7 +265,7 @@ export function InvestigationGraph({ caseId }: Props) {
   }
 
   return (
-    <div className="relative h-[82vh] min-h-[820px] w-full overflow-hidden rounded-xl border border-slate-800" style={{ background: "radial-gradient(circle at top, #111827, #020617)" }}>
+    <div className="relative h-[82vh] min-h-[820px] w-full overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
       <div className="absolute left-4 top-4 z-20 w-[260px] rounded-xl border border-slate-700/80 bg-slate-950/90 p-3 shadow-2xl backdrop-blur">
         <div className="mb-3 flex items-center justify-between">
           <div>
