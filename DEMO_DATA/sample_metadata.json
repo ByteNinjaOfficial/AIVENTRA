@@ -1,0 +1,27 @@
+{
+  "device_owner": "Arun Kumar",
+  "device_model": "Pixel 7",
+  "last_active": "2026-05-08T23:48:00",
+  "calls": [
+    {
+      "time": "21:48",
+      "contact": "Ravi",
+      "duration": 213
+    },
+    {
+      "time": "22:54",
+      "contact": "Unknown",
+      "duration": 92
+    }
+  ],
+  "wifi_connections": [
+    {
+      "time": "22:11",
+      "network": "CafeNet_FreeWiFi"
+    },
+    {
+      "time": "23:02",
+      "network": "FuelStation_Public"
+    }
+  ]
+}
